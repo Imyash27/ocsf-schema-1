@@ -1,41 +1,37 @@
 #### Related Issue:
-None. The problem, sample mapping and references are below.
+No separate issue, details are below.
 
 #### Description of changes:
 
-Adds one optional attribute to the `file` object so a hidden file or directory can be flagged directly, next to the existing `is_system` and `is_readonly` flags.
+This adds an optional `is_hidden` boolean to the `file` object, next to `is_system` and `is_readonly`.
 
 | attribute | type | requirement |
 |---|---|---|
 | `is_hidden` | `boolean_t` | optional |
 
-`is_hidden` is defined in `dictionary.json` with its full description and `references`. The `file` object only sets the requirement.
+The description and references live in `dictionary.json`. The `file` object only sets the requirement.
 
-#### Background
+#### Problem
 
-Every major platform has a notion of a hidden file, but each records it differently:
+We normalize endpoint file data from Windows, macOS and Linux, and there is no clean way to say a file is hidden. The only option today is `file.attributes`, which is a raw bitmask. That works for Windows if you pass the value through, but the consumer still has to know it came from Windows to check bit `0x2`. It does not cover macOS at all, and it does not cover dot files on Linux.
 
-| platform | how a file is hidden | how a sensor sees it |
+Each platform does it differently:
+
+| platform | how a file gets hidden | what the sensor reports |
 |---|---|---|
-| Windows | `FILE_ATTRIBUTE_HIDDEN` (`0x2`), set with `attrib +h` | file attributes bitmask, for example osquery `attributes` = `H` |
-| macOS | `UF_HIDDEN` file flag, set with `chflags hidden` | BSD file flags, for example osquery `bsd_flags` = `HIDDEN` |
-| Linux and other Unix-like systems | name begins with a period | the file name |
+| Windows | `FILE_ATTRIBUTE_HIDDEN` (`0x2`), e.g. `attrib +h` | attributes, e.g. osquery `attributes` = `H` |
+| macOS | `UF_HIDDEN` flag, e.g. `chflags hidden` | BSD flags, e.g. osquery `bsd_flags` = `HIDDEN` |
+| Linux / Unix | file name starts with a period | just the file name |
 
-Microsoft describes `FILE_ATTRIBUTE_HIDDEN` as "The file or directory is hidden. It is not included in an ordinary directory listing." The `chflags(2)` manual page describes `UF_HIDDEN` as a hint that the file "is not intended to be displayed to the user".
+`is_system` and `is_readonly` already exist for the same reason (they also have bits in the Windows bitmask), so `is_hidden` fits the same pattern.
 
-Today the only place for this in OCSF is `file.attributes`, an `integer_t` bitmask with no defined bit meanings. That works for Windows producers that pass the raw value through, but it does not work for macOS flags or for dot files, and a consumer has to know which platform's bit layout was used before it can test for "hidden". `is_system` and `is_readonly` already solve the same problem for the system and read only bits, so `is_hidden` follows the same pattern.
+#### Why it is useful
 
-#### Why it matters
+Hiding a dropped file is a common evasion step. MITRE ATT&CK T1564.001 (Hidden Files and Directories) lists all three methods above, and Sigma has a rule for `attrib.exe` with ` +h `. The Sigma rule only catches the command line though. With `is_hidden` on the file itself, a hunt like "hidden scripts or executables under `C:\Users\Public`" can run on file events and inventory data no matter which tool hid the file, and the same query works on macOS and Linux.
 
-Hiding files is a common defense evasion step, so "is this file hidden" is a field detections are written against:
+#### Sample mapping
 
-- MITRE ATT&CK [T1564.001, Hide Artifacts: Hidden Files and Directories](https://attack.mitre.org/techniques/T1564/001/) covers all three mechanisms above: `attrib.exe +h` on Windows, `chflags hidden` (`UF_HIDDEN`) on macOS, and a leading period on Linux and macOS.
-- The Sigma rule "Hiding Files with Attrib.exe" matches `attrib.exe` launched with ` +h `. That rule sees the command, and `is_hidden` lets the resulting file state be queried in file events and inventory data, whichever tool did the hiding.
-- Hunting queries often look for executables or scripts that are hidden in user writable locations, for example a hidden `.ps1` under `C:\Users\Public`. With `is_hidden` this becomes one normalized predicate instead of one per platform.
-
-#### Example
-
-osquery scheduled query result from the `file` table on Windows (`attributes` is the attrib string, `HA` = hidden and archive):
+osquery `file` table result from a Windows host. `HA` means hidden and archive.
 
 ```json
 {
@@ -56,7 +52,7 @@ osquery scheduled query result from the `file` table on Windows (`attributes` is
 }
 ```
 
-Maps to File Query (5007), Query:
+Mapped to File Query (5007):
 
 ```json
 {
@@ -89,38 +85,36 @@ Maps to File Query (5007), Query:
 }
 ```
 
-`attributes` keeps the raw Windows value (`0x22`, hidden and archive) and `is_hidden` carries the normalized flag. The same row from macOS, with `bsd_flags` = `HIDDEN`, maps to `is_hidden: true` without any Windows bit layout.
+`attributes` still carries the raw Windows value (`0x22`) and `is_hidden` is the normalized flag. A macOS row with `bsd_flags` = `HIDDEN` maps to the same `is_hidden: true`.
 
-The sample validates against the File Query class compiled with this change. Against current `main` the only error is `unknown attribute file.is_hidden`.
+I checked the sample against the File Query class compiled from this branch and it passes. On current `main` the only error is `file.is_hidden` being unknown.
 
-#### Design choices worth flagging
+#### Notes
 
-1. A boolean on `file`, not a new enum or a breakdown of `attributes`. This matches `is_system`, `is_readonly`, `is_encrypted` and `is_deleted`, and keeps `attributes` as the raw value.
-2. Defined generically in the dictionary ("the object is hidden from ordinary directory listings and default user interfaces") so it can be reused later, for example for hidden registry keys or hidden accounts, with the file specific meaning given as the example.
-3. Only the `file` object is changed. Happy to add it elsewhere if the group prefers.
+- I kept it as a plain boolean like the other `is_*` flags on `file`, and did not try to break `attributes` into named bits.
+- The dictionary description is written generically so it could be reused later (hidden registry keys, hidden accounts and so on), but this PR only adds it to `file`. Open to changing the scope if needed.
 
 #### References
 
-Platform documentation
-- [File Attribute Constants](https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants): `FILE_ATTRIBUTE_HIDDEN` (`0x2`), "The file or directory is hidden. It is not included in an ordinary directory listing." Cited in the attribute `references`.
-- [chflags(2) manual page](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/chflags.2.html): `UF_HIDDEN`, "not intended to be displayed to the user". Cited in the attribute `references`.
-- [osquery `file` table spec](https://github.com/osquery/osquery/blob/master/specs/utility/file.table): `attributes` (Windows attrib string) and `bsd_flags` (macOS, includes `HIDDEN`).
+- [File Attribute Constants](https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants): `FILE_ATTRIBUTE_HIDDEN` (`0x2`), "The file or directory is hidden. It is not included in an ordinary directory listing."
+- [chflags(2) man page](https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/chflags.2.html): `UF_HIDDEN`, file "is not intended to be displayed to the user".
+- [osquery `file` table spec](https://github.com/osquery/osquery/blob/master/specs/utility/file.table): `attributes` on Windows and `bsd_flags` on macOS.
+- [MITRE ATT&CK T1564.001, Hidden Files and Directories](https://attack.mitre.org/techniques/T1564/001/)
+- [Sigma, Hiding Files with Attrib.exe](https://github.com/SigmaHQ/sigma/blob/master/rules/windows/process_creation/proc_creation_win_attrib_hiding_files.yml)
 
-Detection content
-- [MITRE ATT&CK T1564.001, Hide Artifacts: Hidden Files and Directories](https://attack.mitre.org/techniques/T1564/001/): `attrib.exe +h`, `UF_HIDDEN` and dot files.
-- [Sigma rule, Hiding Files with Attrib.exe](https://github.com/SigmaHQ/sigma/blob/master/rules/windows/process_creation/proc_creation_win_attrib_hiding_files.yml): `attrib.exe` with ` +h `.
+The first two are also in the attribute `references`.
 
-Files touched: `dictionary.json`, `objects/file.json`, `CHANGELOG.md`.
+Files changed: `dictionary.json`, `objects/file.json`, `CHANGELOG.md`.
 
 #### Confirmations
 
-1. `Unreleased` entries added to `CHANGELOG.md` (Dictionary Attributes and Objects). PR link to be added once the number is known.
-2. Contribution guidelines followed. Every commit carries a `Signed-off-by` trailer.
-3. Validated locally:
-   - `python -m ocsf_validator .` passes, with the same output as `main`
-   - `ocsf-schema-compiler .` compiles with zero errors and zero warnings, in both default and browser mode
+1. Added `Unreleased` entries in `CHANGELOG.md` (Dictionary Attributes and Objects). Will add the PR link once I have the number.
+2. Followed the contribution guidelines, commits are signed off.
+3. Tested locally:
+   - `python -m ocsf_validator .` passes, same output as `main`
+   - `ocsf-schema-compiler .` and `ocsf-schema-compiler -b .` compile with no errors or warnings
    - `python -m ocsf.validate.compatibility` against `main` passes all five checks
-   - `cspell` with the repository config reports no unknown words in the changed lines
-   - the sample event is valid against the compiled File Query class
+   - `cspell` with the repo config is clean on the changed lines
+   - the sample event validates against the compiled File Query class
 4. PR title matches the description.
-5. Captions and descriptions follow the normative and neutral style: no URLs, trademark marks or company names in the caption or description, and citations are in `references`.
+5. Caption and description have no URLs, trademark marks or company names; links are in `references`.
