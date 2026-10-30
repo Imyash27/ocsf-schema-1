@@ -39,7 +39,7 @@ Sample mapping, File System Activity (1001), a process writing `report.md.locked
 
 For an in-place Update (`activity_id` 3), the before value maps to `file.shannon_entropy` and the after value to `file_result.shannon_entropy`, so no extra attribute is needed for before/after.
 
-Naming: as agreed in review, the attribute is named `shannon_entropy` so the name states the algorithm, rather than an `entropy` object with an algorithm id (renamed in 08b122a7, proposed description applied in 427de02a). Per-section entropy for executables (for example PE sections) can be added later as an object that reuses `shannon_entropy` (see #1777).
+Naming: as agreed in review, the attribute is named `shannon_entropy` so the name states the algorithm, rather than an `entropy` object with an algorithm id (renamed in 5fd11e26, proposed description applied in b05d970b). Per-section entropy for executables (for example PE sections) can be added later as an object that reuses `shannon_entropy` (see #1777).
 
 Files touched: `dictionary.json`, `objects/file.json`, `CHANGELOG.md`, `.github/.project-words.txt`.
 
