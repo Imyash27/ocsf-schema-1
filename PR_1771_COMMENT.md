@@ -1,3 +1,3 @@
-@pagbabian-splunk @mikeradka the naming question is settled: renamed to `shannon_entropy` in 5fd11e26, with the proposed description applied in b05d970b, and I have updated the title and description to match. Could the `input_needed` label be removed so this can move to review?
+Thanks @pagbabian-splunk, @mikeradka and @Aniak5 for the approvals. I have updated the title and description to match the rename to `shannon_entropy` (5fd11e26), with the proposed description applied in b05d970b.
 
-I also rebased with `--signoff` so every commit carries a `Signed-off-by` trailer for the DCO check. Only commit messages changed, the files are the same as before rebased onto current `main`. Thanks.
+All commits now carry a `Signed-off-by` trailer for the DCO check (rebased with `--signoff`, only commit messages changed). Since the naming question is settled, could the `input_needed` label be removed so this can be merged?
