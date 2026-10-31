@@ -4,7 +4,7 @@ Right now there is no good way to say a file is hidden in OCSF. The only place i
 
 We run into this when normalizing endpoint data from all three platforms. Hiding a dropped file is a pretty common evasion step (MITRE ATT&CK T1564.001 covers `attrib +h`, `chflags hidden` and dot files), and there is a Sigma rule for `attrib.exe` with ` +h `. That rule only sees the command line though. With `is_hidden` on the file itself you can hunt for things like hidden scripts under `C:\Users\Public` in file events or inventory data, whatever tool hid the file, and the same query works on macOS and Linux.
 
-`is_system` and `is_readonly` already exist for the same reason, so this just follows that pattern. The description and references are in `dictionary.json` and the `file` object only sets the requirement. I kept the dictionary description generic so it could be reused later (hidden registry keys, hidden accounts), but this PR only adds it to `file`.
+`is_system` and `is_readonly` already exist for the same reason, so this just follows that pattern. The description and references are in `dictionary.json` and the `file` object only sets the requirement. The dictionary description is specific to files and directories and says exactly when the value is `true`: the hidden file attribute is set, the user hidden file flag is set, or the name begins with a period.
 
 Example, an osquery `file` table result from a Windows host (`HA` = hidden + archive):
 

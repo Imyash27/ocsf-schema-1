@@ -1,4 +1,4 @@
-This adds a `call_stack` attribute to Process Activity (1007), for the call stack of the thread that opened or injected into the target process.
+This adds a `call_stack` attribute to the `actor` object, for the call stack of the thread that performed the activity. The main use is process access and injection, for example the thread that opened lsass, but since it sits on `actor` it is available on every class that has an actor.
 
 ### The problem
 
@@ -30,13 +30,13 @@ The call stack tells you how the access happened, not just who opened what. That
 
 Elastic's prebuilt rule "Suspicious Process Access via Direct System Call" uses the same idea: alert when the call trace does not start with ntdll or another known system module.
 
-None of these can be written against normalized OCSF data today. With `call_stack`, the comsvcs rule becomes something like `activity_id = 3 AND process.file.name = "lsass.exe" AND call_stack contains "comsvcs.dll"`, and it works the same for Sysmon and for any EDR that maps its stack into the same attribute.
+None of these can be written against normalized OCSF data today. With `call_stack`, the comsvcs rule becomes something like `activity_id = 3 AND process.file.name = "lsass.exe" AND actor.call_stack contains "comsvcs.dll"`, and it works the same for Sysmon and for any EDR that maps its stack into the same attribute.
 
 ### Design
 
-The value is an array of strings, one per frame, most recent call first, each frame kept as the source reports it. For Sysmon, that just means splitting `CallTrace` on `|`.
+**Where it lives.** The first version of this PR put `call_stack` on Process Activity. Following review feedback it is now on the `actor` object instead. The stack belongs to the thread of the actor that performed the activity, so `actor` is the natural place, and it means sources that send stacks on other events (Memory Activity, Module Activity, File System Activity and so on) can use the same attribute without another schema change.
 
-I thought about making each frame an object (module, offset, symbol, is backed), but decided against it for now:
+**Shape.** The value is an array of strings, one per frame, most recent call first, each frame kept as the source reports it. For Sysmon, that just means splitting `CallTrace` on `|`. I thought about making each frame an object (module, offset, symbol, is backed), but decided against it for now:
 
 - Sources format frames differently: `module+offset` in Sysmon, `module!function+offset` or `module!function` in EDR stacks, and `UNKNOWN(address)` or `Unbacked` for frames with no module behind them. Splitting these into fields would mean guessing for some sources.
 - The detections above only do "contains" or "starts with" on the frame text. An array of strings supports that directly.
@@ -44,16 +44,16 @@ I thought about making each frame an object (module, offset, symbol, is backed),
 
 If people would rather have a structured frame object, I am happy to rework it. A string array could still be kept next to it as the raw form.
 
-It is `optional` in the `context` group, since most sources do not send a call stack and it is only present on some activities (Open and Inject mainly).
+It is `optional`, since most sources do not send a call stack.
 
 ### What changes
 
 - `dictionary.json`: new `call_stack` attribute, an array of `string_t`, with the full description.
-- `events/system/process_activity.json`: adds `call_stack` to the class. The class only sets the group and requirement.
-- `CHANGELOG.md`: entries under Dictionary Attributes and Event Classes.
+- `objects/actor.json`: adds `call_stack` as `optional`. The object only sets the requirement.
+- `CHANGELOG.md`: entries under Dictionary Attributes and Objects, with the link to this PR.
 - `.github/.project-words.txt`: adds `ntdll`, which cspell flags in the description example.
 
-I only added it to Process Activity. The dictionary description is written generically ("the call stack of the thread that performed the activity"), so it can be added later to classes like Module Activity, Memory Activity or File System Activity, where some EDRs also send stacks. I kept this PR small on purpose.
+`events/system/process_activity.json` is no longer touched.
 
 ### Example
 
@@ -93,21 +93,21 @@ mapped to Process Activity, Open:
       "tid": 5520,
       "file": { "name": "rundll32.exe", "path": "C:\\Windows\\System32\\rundll32.exe", "type_id": 1 }
     },
-    "user": { "name": "jdoe", "domain": "CONTOSO" }
+    "user": { "name": "jdoe", "domain": "CONTOSO" },
+    "call_stack": [
+      "C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4",
+      "C:\\Windows\\System32\\KERNELBASE.dll+2c13e",
+      "C:\\Windows\\System32\\comsvcs.dll+3b8ef",
+      "C:\\Windows\\System32\\rundll32.exe+3bd4",
+      "C:\\Windows\\System32\\KERNEL32.DLL+17034",
+      "C:\\Windows\\SYSTEM32\\ntdll.dll+52651"
+    ]
   },
   "process": {
     "pid": 724,
     "file": { "name": "lsass.exe", "path": "C:\\Windows\\System32\\lsass.exe", "type_id": 1 }
   },
-  "actual_permissions": 2097151,
-  "call_stack": [
-    "C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4",
-    "C:\\Windows\\System32\\KERNELBASE.dll+2c13e",
-    "C:\\Windows\\System32\\comsvcs.dll+3b8ef",
-    "C:\\Windows\\System32\\rundll32.exe+3bd4",
-    "C:\\Windows\\System32\\KERNEL32.DLL+17034",
-    "C:\\Windows\\SYSTEM32\\ntdll.dll+52651"
-  ]
+  "actual_permissions": 2097151
 }
 ```
 
@@ -115,7 +115,7 @@ The third frame is `comsvcs.dll`, which is exactly what the Sigma comsvcs rule l
 
 ### Testing
 
-- The sample event validates against the Process Activity class compiled from this branch. On current `main` the only error is `call_stack` being an unknown attribute.
+- The sample event validates against the Process Activity class compiled from this branch. On current `main` the only error is `actor.call_stack` being an unknown attribute.
 - `python -m ocsf_validator .` passes.
 - `ocsf-schema-compiler .` and `ocsf-schema-compiler -b .` compile with no errors or warnings.
 - `python -m ocsf.validate.compatibility` against `main` passes all five checks.
