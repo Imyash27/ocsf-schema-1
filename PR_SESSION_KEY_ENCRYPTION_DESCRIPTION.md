@@ -32,14 +32,14 @@ Keeping them in one field loses that. With `session_key_encryption_details`, a p
 
 - **Reuse `encryption_details`.** The session key encryption is the same shape as the ticket encryption (algorithm, key length), so the new attribute is an `encryption_details` object, the same type `encryption_details` already is on `authentication_token`. Nothing new is needed to describe RC4, AES and so on, and #1787's RC4 value applies to both.
 - **New attribute, not a sub-field.** The two encryption types are peers on the ticket, so `session_key_encryption_details` sits next to `encryption_details` rather than inside it.
-- **Generic dictionary entry.** The dictionary description is generic ("the encryption details of the session key, when these are reported separately from the content or ticket encryption"), and the `authentication_token` object carries the Kerberos specific description with the Windows field name. That leaves it reusable for other protocols that split content and session key encryption.
+- **Generic dictionary entry.** The dictionary description is generic ("the encryption details of the session key, when these are reported separately from the content or ticket encryption"), and the `authentication_token` object carries the Kerberos specific description. That description is written in protocol terms, without naming an operating system or event IDs, and the source details (RFC 4120 for the session key, and the 4769 event documentation for the "Session Encryption Type" field) are in the attribute `references`. That leaves it reusable for other protocols that split content and session key encryption.
 - **Optional.** Only some sources report the session key type separately, and the field itself only appeared in Windows in 2025.
 
 ### What changes
 
 - `dictionary.json`: adds `session_key_encryption_details` (`encryption_details` object) with a generic description.
-- `objects/authentication_token.json`: adds `session_key_encryption_details` as `optional`, with the Kerberos specific description.
-- `CHANGELOG.md`: entries under Dictionary Attributes and Objects.
+- `objects/authentication_token.json`: adds `session_key_encryption_details` as `optional`, with the Kerberos specific description and references.
+- `CHANGELOG.md`: entries under Dictionary Attributes and Objects, with the link to this PR.
 
 ### Example
 

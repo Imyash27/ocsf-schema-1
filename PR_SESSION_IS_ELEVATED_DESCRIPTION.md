@@ -29,15 +29,15 @@ With the flag normalized, a query can find elevated interactive logons directly,
 ### Design
 
 - **A boolean on `session`.** The 4624 field is a Yes/No flag about the session, so a boolean on the `session` object is the natural fit, next to the existing `is_mfa`, `is_remote` and `is_vpn` session flags.
-- **Generic dictionary entry, specific usage on `session`.** Following the review feedback on #1792, the dictionary description is generic ("Indicates that the object has elevated privileges. See specific usage."), and the session specific description with the Windows field name is on the `session` object. That leaves `is_elevated` reusable for other objects that have an elevated or non-elevated form.
+- **Generic dictionary entry, specific usage on `session`.** Following the review feedback on #1792, the dictionary description is generic ("Indicates that the object has elevated privileges. See specific usage."), and the session specific description is on the `session` object. That description is vendor neutral ("Indicates whether the session runs with elevated privileges, for example a logon session that holds full administrative rights instead of a filtered set of rights."), and the 4624 event documentation for the "Elevated Token" field is in the attribute `references`. That leaves `is_elevated` reusable for other objects that have an elevated or non-elevated form.
 - **Session level, not process level.** This is deliberately the logon session flag. The process token elevation type is already covered by #1788's `token_elevation_type_id` on the Windows `process` object, and the two answer different questions.
 - **Optional.** Only some sources report it, and on Windows the field exists only from the version 2 schema of 4624.
 
 ### What changes
 
 - `dictionary.json`: adds `is_elevated` (`boolean_t`) with a generic description.
-- `objects/session.json`: adds `is_elevated` as `optional`, with the Windows specific description.
-- `CHANGELOG.md`: entries under Dictionary Attributes and Objects.
+- `objects/session.json`: adds `is_elevated` as `optional`, with the session specific description and a reference.
+- `CHANGELOG.md`: entries under Dictionary Attributes and Objects, with the link to this PR.
 
 ### Example
 

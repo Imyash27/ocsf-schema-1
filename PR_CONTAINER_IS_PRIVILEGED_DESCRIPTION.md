@@ -30,7 +30,7 @@ An example query on normalized data: `class_uid = 1007 AND activity_id = 1 AND p
 ### Design
 
 - **A boolean on `container`.** Privileged mode is an on or off setting in every runtime, so a boolean is the simplest shape and matches the other `is_*` flags in the schema.
-- **Generic dictionary entry, specific usage on `container`.** Following the review feedback on #1792, the dictionary description is generic ("Indicates that the object runs with privileges that remove most of the isolation normally applied to it. See specific usage."), and the container specific description and the Docker and Kubernetes references are on the `container` object. That leaves room to reuse it later, for example for a privileged pod or a privileged virtual machine, without changing the dictionary.
+- **Generic dictionary entry, specific usage on `container`.** Following the review feedback on #1792, the dictionary description is generic ("Indicates if the entity has elevated privileges. See specific usage.", using the wording suggested in review), and the container specific description and the Docker and Kubernetes references are on the `container` object. That leaves room to reuse it later, for example for a privileged pod or a privileged virtual machine, without changing the dictionary.
 - **Optional.** Not every source knows the container configuration, so it is optional.
 - **Out of scope.** Other confinement settings (added capabilities, host namespaces such as `hostPID` and `hostNetwork`, `allowPrivilegeEscalation`) are related but separate. They could follow the same pattern if there is demand.
 
@@ -38,7 +38,7 @@ An example query on normalized data: `class_uid = 1007 AND activity_id = 1 AND p
 
 - `dictionary.json`: adds `is_privileged` (`boolean_t`) with the generic description.
 - `objects/container.json`: adds `is_privileged` as `optional`, with the container specific description and references.
-- `CHANGELOG.md`: entries under Dictionary Attributes and Objects.
+- `CHANGELOG.md`: entries under Dictionary Attributes and Objects, with the link to this PR.
 
 ### Example
 
