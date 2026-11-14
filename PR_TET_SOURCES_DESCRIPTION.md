@@ -19,7 +19,7 @@ The ids are unchanged, so nothing changes for producers. A 4688 event with `%%19
 - `extensions/windows/dictionary.json`:
   - value 1 caption `None` to `Default`. Its description now starts with "The default elevation type, meaning that the token does not have a linked token, so there is no split between a limited and a full token."
   - `"source"` added to values 1, 2 and 3 with the matching Windows constant. The enum schema already supports `source` on enum values ("for example an OS-specific enumeration value").
-- `CHANGELOG.md`: entry under Improved, Platform Extensions.
+No `CHANGELOG.md` entry: as @mikeradka pointed out in review, `token_elevation_type_id` was added during 1.10 and is still in the Unreleased section, so this change is covered by the existing #1788 entry.
 
 There is no change to types, ids or requirements. Since #1788 has not been released yet (it is in the 1.10 Unreleased section), the caption change does not affect any released version.
 
