@@ -16,7 +16,7 @@ Both pages are already in the attribute `references` from #1792. The third case 
 ### What changes
 
 - `objects/file.json`: adds `"source": "FILE_ATTRIBUTE_HIDDEN; UF_HIDDEN"` to `is_hidden`. The two names are separated with a semicolon, the same way the existing `impact_id` source lists two names (`"impact value; impact level"`).
-No `CHANGELOG.md` entry: `is_hidden` was added during 1.10 and is still in the Unreleased section, so this is covered by the existing #1792 entry (the same reasoning @mikeradka gave on #1804).
+- No `CHANGELOG.md` entry: `is_hidden` was added during 1.10 and is still in the Unreleased section, so this is covered by the existing #1792 entry (the same reasoning @mikeradka gave on #1804).
 
 There is no change to the type, requirement or description, and since `is_hidden` is still in the 1.10 Unreleased section, nothing changes for a released version.
 
