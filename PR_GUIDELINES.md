@@ -35,4 +35,5 @@ Cover, in this order:
 - Verify every reference and quote against the source
 - Run the repo's own checks (for OCSF: ocsf_validator, ocsf-schema-compiler in both modes, compatibility check, cspell, neutral wording precheck, sample event validation, DCO)
 - For OCSF: full descriptions go in `dictionary.json`, objects and classes only set requirement and group; add `source` where applicable
-- After the PR number is known, add the PR link to the CHANGELOG entries
+- For OCSF changelog entries (since ocsf/ocsf-schema#1813): do not edit `CHANGELOG.md`. After the PR is opened, add `changelog.d/<PR number>.md` with the same headings as CHANGELOG.md (`### Added` / `### Improved` with a `####` sub-heading, entries as `- ` list items, no PR link), and run `python .github/scripts/changelog.py check --pr <N> --base <main>`
+- No changelog entry is needed for a change to an attribute that is still in the Unreleased section, or for a description-only edit
