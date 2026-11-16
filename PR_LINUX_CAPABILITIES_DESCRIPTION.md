@@ -37,7 +37,7 @@ Capabilities are also useful as context on any process event. A process in a con
 
 - `dictionary.json`: adds `effective_capabilities` (array of `string_t`) with the description and a reference to capabilities(7).
 - `extensions/linux/objects/process.json`: adds `effective_capabilities` as `optional`.
-- `CHANGELOG.md`: entries under Dictionary Attributes and Platform Extensions.
+- `changelog.d/1807.md`: entries under Added, Dictionary Attributes and Improved, Platform Extensions, using the per-PR changelog files from #1813.
 
 ### Example
 
@@ -119,6 +119,7 @@ A Falco event maps the same way: `thread.cap_effective` is a space separated lis
 - `ocsf-schema-compiler .` and `ocsf-schema-compiler -b .` compile with no errors or warnings, and the compiled `process` object has `effective_capabilities` as an optional string array.
 - `python -m ocsf.validate.compatibility` against `main` passes all five checks.
 - `cspell` with the repo config is clean on the changed lines.
+- `python .github/scripts/changelog.py check --pr 1807` passes.
 - Commits are signed off.
 
 ### References
