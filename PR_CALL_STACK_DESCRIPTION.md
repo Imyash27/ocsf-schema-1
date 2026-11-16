@@ -36,11 +36,20 @@ None of these can be written against normalized OCSF data today. With `call_stac
 
 **Where it lives.** This went through a few places in review. The first version put `call_stack` on Process Activity, the second on the `actor` object. A call stack is not an actor though, and it is really a property of a thread. OCSF does not model threads directly, but the `process` object already identifies the thread relevant to the activity through `tid` (and `ptid`), so `call_stack` sits next to `tid` as the stack of that thread. `process_entity` was also suggested, but it is the lightweight reference used in `ancestry`, and those processes may no longer exist when the event happens, so a point in time call stack does not fit there. On `process`, sources that send stacks on other events (Memory Activity, Module Activity, File System Activity and so on) can use the same attribute without another schema change.
 
-**Shape.** The value is an array of strings, one per frame, most recent call first, each frame kept as the source reports it. For Sysmon, that just means splitting `CallTrace` on `|`. I thought about making each frame an object (module, offset, symbol, is backed), but decided against it for now:
+**Shape.** The value is an array of strings, one per frame, most recent call first. I thought about making each frame an object (module, offset, symbol, is backed), but decided against it for now. The detections above only do "contains" or "starts with" on the frame text, and an array of strings supports that directly.
 
-- Sources format frames differently: `module+offset` in Sysmon, `module!function+offset` or `module!function` in EDR stacks, and `UNKNOWN(address)` or `Unbacked` for frames with no module behind them. Splitting these into fields would mean guessing for some sources.
-- The detections above only do "contains" or "starts with" on the frame text. An array of strings supports that directly.
-- Keeping frames as text means nothing gets lost in mapping.
+**Frame format.** Following review, the description defines one format for each frame so values are consistent across sources:
+
+| case | format | example |
+|---|---|---|
+| module and offset | `module+offset` | `C:\Windows\System32\ntdll.dll+9d4c4h` |
+| with a symbol | `module!symbol+offset` | `C:\Windows\System32\ntdll.dll!NtOpenProcess+14h` |
+| decimal offset | no suffix | `/usr/lib/x86_64-linux-gnu/libc.so.6!malloc+141` |
+| no backing module | the address alone | `00000216A4C10F2Bh` |
+
+Numbers are decimal unless they end with `h`, which marks them as hexadecimal. Sources write offsets differently (Sysmon writes bare hex such as `+9d4c4`), so without a marker `+1183` would be ambiguous. For a frame with no module behind it, the plain address is enough: `UNKNOWN` adds nothing, because a known module would have been named.
+
+For Sysmon this means splitting `CallTrace` on `|`, adding `h` to each offset, and writing an `UNKNOWN(address)` frame as the address with `h`.
 
 If people would rather have a structured frame object, I am happy to rework it. A string array could still be kept next to it as the raw form.
 
@@ -51,7 +60,7 @@ It is `optional`, since most sources do not send a call stack.
 - `dictionary.json`: new `call_stack` attribute, an array of `string_t`, with the full description.
 - `objects/process.json`: adds `call_stack` as `optional`, next to `tid`. The object only sets the requirement.
 - `CHANGELOG.md`: entries under Dictionary Attributes and Objects, with the link to this PR.
-- `.github/.project-words.txt`: adds `ntdll`, which cspell flags in the description example.
+- `.github/.project-words.txt`: adds `ntdll` and `libc`, which cspell flags in the description examples.
 
 `events/system/process_activity.json` is no longer touched.
 
@@ -93,12 +102,12 @@ mapped to Process Activity, Open:
       "tid": 5520,
       "file": { "name": "rundll32.exe", "path": "C:\\Windows\\System32\\rundll32.exe", "type_id": 1 },
       "call_stack": [
-        "C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4",
-        "C:\\Windows\\System32\\KERNELBASE.dll+2c13e",
-        "C:\\Windows\\System32\\comsvcs.dll+3b8ef",
-        "C:\\Windows\\System32\\rundll32.exe+3bd4",
-        "C:\\Windows\\System32\\KERNEL32.DLL+17034",
-        "C:\\Windows\\SYSTEM32\\ntdll.dll+52651"
+        "C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c4h",
+        "C:\\Windows\\System32\\KERNELBASE.dll+2c13eh",
+        "C:\\Windows\\System32\\comsvcs.dll+3b8efh",
+        "C:\\Windows\\System32\\rundll32.exe+3bd4h",
+        "C:\\Windows\\System32\\KERNEL32.DLL+17034h",
+        "C:\\Windows\\SYSTEM32\\ntdll.dll+52651h"
       ]
     },
     "user": { "name": "jdoe", "domain": "CONTOSO" }
@@ -111,7 +120,7 @@ mapped to Process Activity, Open:
 }
 ```
 
-The third frame is `comsvcs.dll`, which is exactly what the Sigma comsvcs rule looks for. For a direct syscall case the first frame would be something like `UNKNOWN(00000216A4C10F2B)` instead of ntdll.
+The third frame is `comsvcs.dll`, which is exactly what the Sigma comsvcs rule looks for. For a direct syscall case the first frame would be a bare address such as `00000216A4C10F2Bh` instead of an ntdll frame, so the direct syscall rule becomes "the first frame has no module".
 
 ### Testing
 
