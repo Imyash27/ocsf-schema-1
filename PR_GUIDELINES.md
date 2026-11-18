@@ -38,6 +38,11 @@ Cover, in this order:
 - For OCSF changelog entries (since ocsf/ocsf-schema#1813): do not edit `CHANGELOG.md`. After the PR is opened, add `changelog.d/<PR number>.md` with the same headings as CHANGELOG.md (`### Added` / `### Improved` with a `####` sub-heading, entries as `- ` list items, no PR link), and run `python .github/scripts/changelog.py check --pr <N> --base <main>`
 - No changelog entry is needed for a change to an attribute that is still in the Unreleased section, or for a description-only edit
 
+## Quality bar for every PR
+- Quality comes first on every PR and MR: a real gap, verified sources, the right shape for the schema, and all checks above passing
+- Before proposing a new class or object, research whether extending an existing one would work (attributes, objects, profiles, open issues about the alternative), and explain in the description why the new one is needed
+- After a PR is opened, check the automated description review comment and fix its findings, and answer every reviewer comment
+
 ## Hard rule: stay at least 5 PRs ahead of therajvira (ocsf/ocsf-schema)
 - Yash's PR count in ocsf/ocsf-schema (author Imyash27, open plus merged) must always be at least 5 higher than therajvira's, and his merged count must stay higher too
 - On every status check, count both with the GitHub searches `is:pr author:Imyash27` and `is:pr author:therajvira` on ocsf/ocsf-schema, and report the lead

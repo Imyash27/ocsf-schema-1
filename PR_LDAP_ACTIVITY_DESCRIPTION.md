@@ -44,6 +44,16 @@ class_uid = 4016 AND activity_id = 3
 
 Cleartext binds become `class_uid = 4016 AND activity_id = 1 AND bind_type_id = 1 AND is_cleartext = true`.
 
+### Why a new class and not more fields on Network Activity
+
+I looked at extending `Network Activity` first, since adding a class is a bigger step. It doesn't fit well, for three reasons:
+
+- **Activities.** `Network Activity` activities describe the connection: Open, Close, Reset, Fail, Refuse, Traffic and Listen. LDAP events are operations inside a connection (Bind, Search, Modify, Delete), and one connection usually carries many of them. In `Network Activity` every search would be a "Traffic" event, and the operation would have to be carried in a separate enum, which is what `activity_id` is for in a protocol class.
+- **Precedent.** OCSF models application protocols with request level fields as their own Network classes: HTTP, DNS, DHCP, RDP, SMB, SSH, FTP, NTP (added in 1.1.0), Tunnel (1.2.0) and, most recently, DNS Zone Transfer Activity (#1675), added in September by Aniak5 and floydtree. LDAP is the same kind of protocol.
+- **The profile idea is a 2.0 item.** Issue #1384 proposes protocol profiles on `Network Activity` instead of protocol classes, which would be the main alternative. It is labeled "v2.0 and later" because of its breaking nature and has had no discussion, so it is not an option for 1.x yet. If it moves forward, the LDAP attributes here can move into an LDAP profile without changes to their names or types.
+
+`Authentication` with `auth_protocol_id` = LDAP stays the right class for a Bind that logs a user on, as the class description says. This class adds what `Authentication` cannot hold: searches, changes and the protocol details of a bind.
+
 ### Design
 
 - **A protocol class, like DNS, SMB, RDP and SSH.** These protocols each have their own class in the Network category because their requests carry protocol specific fields. LDAP is the same. The class extends `network`, so endpoints, `connection_info`, `traffic` and `tls` come from the base. Because the `host` profile applies, an endpoint sensor can also set `actor.process` for the process that ran the search.
@@ -52,7 +62,7 @@ Cleartext binds become `class_uid = 4016 AND activity_id = 1 AND bind_type_id = 
 - **Result code.** The result goes in the base `status_id` (Success or Failure), the RFC 4511 `resultCode` as the source gives it (number or name) in `status_code`, and the `diagnosticMessage` in `status_detail`. I thought about a normalized result code enum like `rcode_id` in DNS, but RFC 4511 already fixes the numbers and names, so the source value is enough. I can add a `result_code_id` enum if reviewers prefer.
 - **Reuse.** `ldap_dn` holds the entry the operation applies to (the bind name, the search base, or the entry being modified, added, deleted, renamed or compared). `transaction_id`, `num_records` (entries returned by a search) and `is_cleartext` are reused as well.
 - **New dictionary attributes** are `bind_type` / `bind_type_id`, `sasl_mechanism`, `search_filter`, `search_scope` / `search_scope_id` and `requested_attributes`. The dictionary entries are generic ("See specific usage"), and the class carries the LDAP specific descriptions and enums.
-- **`bind_type_id`** is Simple, SASL or Sicily. Sicily is the Microsoft bind method for NTLM described in MS-ADTS 5.1.1.1, and Zeek reports it as `sicily_negotiate` / `sicily_response`.
+- **`bind_type_id`** is Simple, SASL or Sicily. Sicily is a non-standard, multi-step bind method that carries NTLM, described in MS-ADTS 5.1.1.1, and Zeek reports it as `sicily_negotiate` / `sicily_response`. Following the description review bot, the schema description doesn't name a vendor product.
 - **`search_scope_id`** values are 1 greater than the RFC 4511 `scope` values, so that 0 stays Unknown. This follows `download_info.type_id`, which does the same with Mark of the Web zone ids.
 - **Uid 16** is the next free uid in the Network category, after DNS Zone Transfer Activity (15).
 - **Left out for now.** The list of changes in a Modify (Zeek writes it to `argument`, for example `replace(attribute=value)`), dereferencing of aliases, size and time limits, and the OID of an Extended request. Each can be added later without changing anything here, and I'm happy to add any of them in this PR if people want them now.
@@ -64,6 +74,7 @@ If reviewers would rather group the search fields into an `ldap_search` object, 
 - `events/network/ldap_activity.json`: new `LDAP Activity` class (uid 16, so `class_uid` 4016), extending `network`, with the activities above and the class specific descriptions.
 - `dictionary.json`: adds `bind_type`, `bind_type_id`, `requested_attributes`, `sasl_mechanism` (with the IANA SASL mechanisms registry as a reference), `search_filter`, `search_scope` and `search_scope_id`.
 - `.github/.project-words.txt`: adds `SASL` and `SPNEGO` for cspell.
+- The `search_filter` example in the schema is `(servicePrincipalName=*)`, so the description renders without a raw `&` (the other finding from the description review bot).
 - `changelog.d/1827.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1827` run passes.
 
 ### Example
