@@ -37,3 +37,9 @@ Cover, in this order:
 - For OCSF: full descriptions go in `dictionary.json`, objects and classes only set requirement and group; add `source` where applicable
 - For OCSF changelog entries (since ocsf/ocsf-schema#1813): do not edit `CHANGELOG.md`. After the PR is opened, add `changelog.d/<PR number>.md` with the same headings as CHANGELOG.md (`### Added` / `### Improved` with a `####` sub-heading, entries as `- ` list items, no PR link), and run `python .github/scripts/changelog.py check --pr <N> --base <main>`
 - No changelog entry is needed for a change to an attribute that is still in the Unreleased section, or for a description-only edit
+
+## Hard rule: stay at least 5 PRs ahead of therajvira (ocsf/ocsf-schema)
+- Yash's PR count in ocsf/ocsf-schema (author Imyash27, open plus merged) must always be at least 5 higher than therajvira's, and his merged count must stay higher too
+- On every status check, count both with the GitHub searches `is:pr author:Imyash27` and `is:pr author:therajvira` on ocsf/ocsf-schema, and report the lead
+- If the lead drops below 5, or therajvira opens a new PR, find and prepare new PRs right away until the lead is back to 5 or more, without waiting to be asked
+- The count never lowers the bar: every PR is still a real gap with source evidence, a duplicate check and all the checks above. No filler, split or trivial PRs just to raise the number
