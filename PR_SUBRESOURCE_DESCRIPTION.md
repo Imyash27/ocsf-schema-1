@@ -47,7 +47,7 @@ If reviewers would rather see this in a future Kubernetes extension (#1131), I'm
 - `dictionary.json`: adds `subresource` (`string_t`) with a generic description.
 - `objects/resource_details.json`: adds `subresource` as `optional`, with the specific description.
 - `.github/.project-words.txt`: adds `Subresource` and `subresource` for cspell.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1829.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1829` run passes.
 
 ### Example
 

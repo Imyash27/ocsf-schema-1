@@ -52,7 +52,7 @@ If people would prefer the other direction (`actor.user` is the effective identi
 
 - `dictionary.json`: adds `impersonated_user` (type `user`) with a generic description.
 - `objects/actor.json`: adds `impersonated_user` as `optional`, with the specific description.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1828.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1828` run passes.
 
 ### Example
 

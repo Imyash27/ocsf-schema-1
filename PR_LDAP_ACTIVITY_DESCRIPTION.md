@@ -64,7 +64,7 @@ If reviewers would rather group the search fields into an `ldap_search` object, 
 - `events/network/ldap_activity.json`: new `LDAP Activity` class (uid 16, so `class_uid` 4016), extending `network`, with the activities above and the class specific descriptions.
 - `dictionary.json`: adds `bind_type`, `bind_type_id`, `requested_attributes`, `sasl_mechanism` (with the IANA SASL mechanisms registry as a reference), `search_filter`, `search_scope` and `search_scope_id`.
 - `.github/.project-words.txt`: adds `SASL` and `SPNEGO` for cspell.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1827.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1827` run passes.
 
 ### Example
 
