@@ -31,6 +31,7 @@ class_uid = 3002 AND grant_type_id = 6 AND status_id = 1
 
 - **On Authentication, next to `auth_protocol_id`.** The grant type refines the protocol: `auth_protocol_id` stays OAUTH 2.0 (or OpenID, which uses the same grants), and `grant_type_id` says which grant. That keeps `auth_protocol_id` meaning what it means today. Entra's `AuthenticationProtocol` mixes the two (`saml20` and `wsFederation` are protocols, `deviceCode` and `ropc` are grants), so a producer maps it to both attributes.
 - **An enum from the standards.** Authorization Code, Implicit, Resource Owner Password Credentials, Client Credentials and Refresh Token from RFC 6749, Device Code from RFC 8628, JWT Bearer from RFC 7523, SAML 2.0 Bearer from RFC 7522 and Token Exchange from RFC 8693. Each value has its `grant_type` parameter value as `source` (for Implicit, `response_type=token`, since it has no grant type parameter) and a reference to its RFC section, so producers can map the raw value directly.
+- **The schema description stays neutral.** Following the description review, it explains the attribute and how to use Unknown and Other, and the detection context stays in this description.
 - **Primary and recommended**, because detections key on it. It only applies to OAuth based sign-ins, and other sources leave it unset.
 - **Not on `authentication_token`.** The grant is how the client authenticated for this request, not a property of the token, and the same sign-in can return several tokens.
 
@@ -40,7 +41,7 @@ If reviewers would rather call it `oauth_grant_type`, or put it on another objec
 
 - `dictionary.json`: adds `grant_type` and `grant_type_id` with generic descriptions.
 - `events/iam/authentication.json`: adds both attributes (primary, recommended), with the enum, a `source` on each value and RFC references.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1840.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1840` run passes.
 
 ### Example
 

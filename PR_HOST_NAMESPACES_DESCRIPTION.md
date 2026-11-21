@@ -45,7 +45,7 @@ class_uid = 6003 AND api.operation = "create" AND resources.type = "pods"
 
 - `dictionary.json`: adds `is_host_ipc`, `is_host_network` and `is_host_pid` (`boolean_t`).
 - `objects/container.json`: adds the three attributes as `optional`, with specific descriptions and references.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1841.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1841` run passes.
 
 ### Example
 

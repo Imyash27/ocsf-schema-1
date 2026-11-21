@@ -34,22 +34,22 @@ class_uid = 6003 AND api.operation = "create" AND resources.type = "pods"
 
 - **A new `mount` object, used from `container.mounts`.** A container usually has several mounts, and each one needs a few related fields (source, destination, type, read only), so they belong together in an object. I looked for an existing object to reuse. `file` describes one file, not a mapping between two paths, and `image.path` is the image's path, which is why the EKS mapping loses information.
 - **Attributes:**
-  - `path` (required): where the mount is attached inside the container. This reuses the generic `path`.
+  - `path` (required): where the mount is attached inside the container. This reuses the generic `path`, typed as `file_path_t` like `host_path` (and like `path` on `file` and `image`).
   - `host_path` (recommended): the host directory or file, for bind mounts and Kubernetes `hostPath` volumes. This is the field detections check.
   - `name` (optional): the volume name.
-  - `is_read_only` (recommended): whether the container can write to it.
+  - `is_readonly` (recommended): whether the container can write to it. This reuses the existing `is_readonly` attribute, following the description review.
   - `type_id` / `type` (recommended): Bind, Volume, Temporary File System or Named Pipe, following the runtime mount types. Kubernetes `hostPath` is Bind, and the other Kubernetes volume sources (`emptyDir`, `configMap`, `secret`, persistent volume claims) are Volume.
-- **New dictionary attributes** are `mounts`, `host_path` (`file_path_t`) and `is_read_only`, with generic descriptions. `name`, `path`, `type` and `type_id` are reused.
+- **New dictionary attributes** are only `mounts` and `host_path` (`file_path_t`), with generic descriptions. `name`, `path`, `type`, `type_id` and `is_readonly` are reused.
 - **Left out for now.** Mount propagation and mount options (the runtime's `Propagation` and `Mode`, Falco's `container.mount.propagation` and `container.mount.mode`). They matter less for detection, and I'm happy to add them if reviewers want them.
 
 If reviewers prefer a different name for the object (for example `volume_mount`) or for `host_path`, I can change them.
 
 ### What changes
 
-- `objects/mount.json`: new `mount` object with `path`, `host_path`, `name`, `is_read_only`, `type` and `type_id`, and references to Kubernetes volumes, the Pod Security Standards and the container runtime API.
-- `dictionary.json`: adds `mounts` (array of `mount`), `host_path` (`file_path_t`) and `is_read_only` (`boolean_t`).
+- `objects/mount.json`: new `mount` object with `path`, `host_path`, `name`, `is_readonly`, `type` and `type_id`, and references to Kubernetes volumes, the Pod Security Standards and the container runtime API.
+- `dictionary.json`: adds `mounts` (array of `mount`) and `host_path` (`file_path_t`).
 - `objects/container.json`: adds `mounts` as `optional`.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1842.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1842` run passes.
 
 ### Example
 
@@ -102,7 +102,7 @@ Field mapping (other fields follow the `ocsf/examples` EKS audit mapping):
 | **`volumeMounts[].mountPath`** | **`mounts[].path`**, instead of `image.path` |
 | **`volumes[].hostPath.path`** (joined on the volume name) | **`mounts[].host_path`**, with `type_id` = 1 (Bind) |
 | **`volumeMounts[].name`** | **`mounts[].name`** |
-| **`volumeMounts[].readOnly`** (unset means writable) | **`mounts[].is_read_only`** |
+| **`volumeMounts[].readOnly`** (unset means writable) | **`mounts[].is_readonly`** |
 | a volume that is not a `hostPath` (the service account token) | `mounts[].type_id` = 2 (Volume) |
 
 Result, API Activity (6003), Create:
@@ -133,9 +133,9 @@ Result, API Activity (6003), Create:
           "name": "agent",
           "image": { "name": "registry.example.com/tools/agent", "tag": "2.4.1", "uid": "registry.example.com/tools/agent:2.4.1" },
           "mounts": [
-            { "name": "dockersock", "type_id": 1, "type": "Bind", "host_path": "/var/run/docker.sock", "path": "/var/run/docker.sock", "is_read_only": false },
-            { "name": "hostroot", "type_id": 1, "type": "Bind", "host_path": "/", "path": "/host", "is_read_only": true },
-            { "name": "kube-api-access-7x2kd", "type_id": 2, "type": "Volume", "path": "/var/run/secrets/kubernetes.io/serviceaccount", "is_read_only": true }
+            { "name": "dockersock", "type_id": 1, "type": "Bind", "host_path": "/var/run/docker.sock", "path": "/var/run/docker.sock", "is_readonly": false },
+            { "name": "hostroot", "type_id": 1, "type": "Bind", "host_path": "/", "path": "/host", "is_readonly": true },
+            { "name": "kube-api-access-7x2kd", "type_id": 2, "type": "Volume", "path": "/var/run/secrets/kubernetes.io/serviceaccount", "is_readonly": true }
           ]
         }
       ]
@@ -162,7 +162,7 @@ The first mount, a writable `/var/run/docker.sock`, is what the Elastic, Falco a
 - The sample event validates against the API Activity class compiled from this branch. On current `main` the only error is `api.request.containers.mounts` being an unknown attribute.
 - `python .github/scripts/format_schema.py --check` reports no files that need formatting (the new object is named `mount.json` after its `name`), and every changed file ends with a newline.
 - `python -m ocsf_validator .` passes with no failures.
-- `ocsf-schema-compiler .` and `ocsf-schema-compiler -b .` compile with no errors or warnings. The compiled `mount` object has `path` required, `host_path` and `is_read_only` recommended, and `container.mounts` as an array of `mount`.
+- `ocsf-schema-compiler .` and `ocsf-schema-compiler -b .` compile with no errors or warnings. The compiled `mount` object has `path` required, `host_path` and `is_readonly` recommended, and `container.mounts` as an array of `mount`.
 - `python -m ocsf.validate.compatibility` against `main` passes all five checks.
 - `cspell` with the repo config is clean on the changed files.
 - The normative precheck from `.github/scripts/review_descriptions.py` finds nothing in the new descriptions.
