@@ -48,7 +48,7 @@ The key length check is `auth_protocol_id = 1 AND key_length != 128`.
 
 - `dictionary.json`: adds `auth_protocol_ver` (`string_t`) with a generic description.
 - `events/iam/authentication.json`: adds `auth_protocol_ver` and `key_length` as optional context attributes, with Authentication specific descriptions.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1832.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1832` run passes.
 
 ### Example
 

@@ -43,9 +43,9 @@ If reviewers would rather group these into an `ssh_algorithms` object, or reuse 
 ### What changes
 
 - `dictionary.json`: adds `cipher_algorithm`, `compression_algorithm`, `host_key_algorithm`, `host_key_fingerprint` (type `fingerprint`), `kex_algorithm` and `mac_algorithm`.
-- `events/network/ssh_activity.json`: adds the six attributes with SSH specific descriptions.
+- `events/network/ssh_activity.json`: adds the six attributes with SSH specific descriptions. Following the description review, the `host_key_fingerprint` description says which `fingerprint` attributes hold the hash algorithm and the digest, without naming a product.
 - `.github/.project-words.txt`: adds `nistp` (from `ecdsa-sha2-nistp256` in a description) for cspell.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1831.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1831` run passes.
 
 ### Example
 

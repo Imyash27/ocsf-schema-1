@@ -45,7 +45,7 @@ If people would rather keep Windows specific logon flags out of the core `sessio
 
 - `dictionary.json`: adds `is_restricted_admin` (`boolean_t`) with a generic description.
 - `objects/session.json`: adds `is_restricted_admin` as `optional`, with the specific description and references to the 4624 documentation and to the RDP Negotiation Response flags.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1833.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1833` run passes.
 
 ### Example
 

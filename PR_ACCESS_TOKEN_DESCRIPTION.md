@@ -48,7 +48,7 @@ If reviewers would rather call it "OAuth Access Token" to be explicit, or think 
 ### What changes
 
 - `objects/token.json`: adds `8` Access Token to `type_id`, with a description and a reference to RFC 6749 section 1.4.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1834.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1834` run passes.
 
 ### Example
 

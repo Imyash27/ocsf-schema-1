@@ -44,7 +44,7 @@ If reviewers prefer different captions, for example "Hybrid" instead of "CredSSP
 
 - `events/network/rdp_activity.json`: adds `security_protocol` and `security_protocol_id` (primary, recommended), with the enum, a `source` on each value, and a reference to the RDP Negotiation Response section of MS-RDPBCGR.
 - `.github/.project-words.txt`: adds `RDPBCGR`, `RDSAAD` and `RDSTLS` for cspell.
-- `changelog.d/<this PR>.md`: I'll add it once the PR has a number, as described in `changelog.d/README.md`.
+- `changelog.d/1830.md`: the changelog entries for this PR, as described in `changelog.d/README.md`. The `changelog.py check --pr 1830` run passes.
 
 ### Example
 
